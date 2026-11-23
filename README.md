@@ -24,3 +24,66 @@ MenuPlanner — вебплатформа для пошуку рецептів і
 - AI-підбір рецептів за обмеженнями в харчуванні (AI вибирає страви лише з каталогу CookBook і пояснює вибір)
 - Автоматичний список покупок із тижневого меню
 - Email-нотифікації (підтвердження реєстрації, список покупок на пошту, статус запропонованого рецепта).
+
+## Запуск проєкту
+
+### Вимоги
+
+- Python 3.12
+
+### Встановлення
+
+```bash
+git clone <https://github.com/dpokatilova/menu_planner.git>
+cd menu_planner
+```
+
+Віртуальне середовище:
+
+**macOS / Linux**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Windows (PowerShell)**
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Налаштування
+
+Скопіюйте `.env.example` у `.env` і заповніть значення:
+
+- macOS / Linux: `cp .env.example .env`
+- Windows: `copy .env.example .env`
+
+| Змінна | Опис |
+|---|---|
+| `SECRET_KEY` | Секретний ключ Django |
+| `DEBUG` | `True` для розробки, `False` для продакшену |
+| `ALLOWED_HOSTS` | Домени через кому, наприклад `localhost,127.0.0.1` |
+| `CORS_ALLOWED_ORIGINS` | Адреса фронтенду, наприклад `http://localhost:5173` |
+
+## TODO
+- Додати коректну адресу фронта
+
+Згенерувати `SECRET_KEY`:
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key as g; print(g())"
+```
+
+### Запуск
+
+```bash
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
+
