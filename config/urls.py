@@ -28,4 +28,5 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/ai/", include("ai.urls")),
+    path("api/", include("recipes.urls")),
 ]
