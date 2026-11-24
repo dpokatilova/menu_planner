@@ -15,7 +15,7 @@ DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
 class AIError(Exception):
-
+    """Помилка виклику AI-провайдера."""
 
 def call_ai_json(system: str, user_prompt: str, timeout: int | None = None) -> dict:
     if timeout is None:
