@@ -48,6 +48,14 @@ MenuPlanner — вебплатформа для пошуку рецептів і
 | POST | `/api/auth/refresh/` | новий `access`, старий `refresh` гаситься |
 | POST | `/api/auth/logout/` | `refresh` у чорний список |
 | GET | `/api/auth/me/` | дані користувача та його роль |
+| GET | `/api/recipes/` | каталог схвалених рецептів з фільтрами й пагінацією |
+| GET | `/api/recipes/{id}/` | рецепт з інгредієнтами |
+| GET | `/api/categories/` | довідник категорій |
+| GET | `/api/diet-tags/` | довідник тегів обмежень |
+| GET | `/api/products/` | довідник продуктів |
+
+Параметри каталогу: `search`, `category`, `diet_tag` (кілька через кому, рецепт має мати всі),
+`product`, `max_time`, `max_calories`, `ordering`, `page`, `page_size` (до 50).
 
 ## Запуск проєкта
 
