@@ -7,7 +7,7 @@ def _to_decimal(value) -> Decimal:
     return value if isinstance(value, Decimal) else Decimal(str(value))
 
 
-def _to_number(value: Decimal):
+def to_number(value: Decimal):
     """100, а не Decimal("100"): щоб у JSON було число, а не рядок."""
     if value == value.to_integral_value():
         return int(value)
@@ -40,7 +40,7 @@ def calculate_leftovers(shopping_items, products_info):
                 {
                     "product_id": item["product_id"],
                     "product_name": item.get("product_name", ""),
-                    "leftover": _to_number(leftover),
+                    "leftover": to_number(leftover),
                     "unit": item["unit"],
                     "shelf_life_days": info.get("shelf_life_days"),
                 }

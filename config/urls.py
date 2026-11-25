@@ -29,4 +29,5 @@ urlpatterns = [
     ),
     path("api/ai/", include("ai.urls")),
     path("api/", include("menus.urls")),
+    path("api/", include("leftovers.urls")),
 ]

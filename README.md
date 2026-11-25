@@ -55,6 +55,7 @@ MenuPlanner — вебплатформа для пошуку рецептів і
 | DELETE | `/api/menus/{id}/items/{item_id}/` | прибрати рецепт                                             |
 | POST | `/api/menus/{id}/save/` | зберегти меню в історію                                     |
 | GET | `/api/menus/{id}/shopping-list/` | список покупок із меню |                                     |
+| GET | `/api/menus/{id}/leftovers/` | залишки з упаковок і рецепти, що їх використають |                                     |
 
 ## Запуск проєкта
 
