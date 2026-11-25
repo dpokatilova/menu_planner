@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 
 from menus.models import Menu, MenuItem
 from menus.serializers import MenuItemSerializer, MenuSerializer
+from menus.services import build_shopping_list
 
 
 class OwnMenuMixin:
@@ -66,3 +67,12 @@ class MenuSaveView(OwnMenuMixin, APIView):
         menu.status = Menu.Status.SAVED
         menu.save(update_fields=["status"])
         return Response(MenuSerializer(menu).data, status=status.HTTP_200_OK)
+
+
+class ShoppingListView(OwnMenuMixin, APIView):
+    def get(self, request, pk):
+        menu = self.get_menu()
+        menu_items = menu.items.select_related("recipe").prefetch_related(
+            "recipe__ingredients__product"
+        )
+        return Response({"items": build_shopping_list(menu_items)})

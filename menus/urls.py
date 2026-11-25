@@ -1,6 +1,6 @@
 from django.urls import path
 
-from menus.views import MenuDetailView, MenuItemCreateView, MenuItemDeleteView, MenuListCreateView, MenuSaveView
+from menus.views import MenuDetailView, MenuItemCreateView, MenuItemDeleteView, MenuListCreateView, MenuSaveView, ShoppingListView
 
 urlpatterns = [
     path("menus/", MenuListCreateView.as_view(), name="menu-list"),
@@ -12,4 +12,9 @@ urlpatterns = [
         name="menu-item-delete",
     ),
     path("menus/<int:pk>/save/", MenuSaveView.as_view(), name="menu-save"),
+path(
+        "menus/<int:pk>/shopping-list/",
+        ShoppingListView.as_view(),
+        name="menu-shopping-list",
+    ),
 ]
