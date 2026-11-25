@@ -1,4 +1,6 @@
 from datetime import date
+from decimal import Decimal
+
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -6,7 +8,9 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from menus.models import Menu, MenuItem
+from menus.services import build_shopping_list
 from recipes.models import Recipe
+from recipes.models import Product, RecipeIngredient, Unit
 
 User = get_user_model()
 
@@ -205,3 +209,127 @@ class MenuHistoryTests(MenuTestCase):
         response = self.client.get(reverse("menu-list"), {"status": "saved"})
         weeks = [item["week_start"] for item in response.data["results"]]
         self.assertEqual(weeks, [str(NEXT_MONDAY), str(MONDAY)])
+
+
+class ShoppingListTests(MenuTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.milk = Product.objects.create(
+            name="Молоко",
+            unit=Unit.MILLILITER,
+            is_packaged=True,
+            package_size=Decimal("1000"),
+        )
+        cls.eggs = Product.objects.create(name="Яйця", unit=Unit.PIECE)
+        cls.sugar = Product.objects.create(
+            name="Цукор",
+            unit=Unit.GRAM,
+            is_packaged=True,
+            package_size=Decimal("1000"),
+        )
+
+        RecipeIngredient.objects.create(
+            recipe=cls.approved, product=cls.milk, amount=200, unit=Unit.MILLILITER
+        )
+        RecipeIngredient.objects.create(
+            recipe=cls.approved, product=cls.eggs, amount=2, unit=Unit.PIECE
+        )
+        RecipeIngredient.objects.create(
+            recipe=cls.another, product=cls.milk, amount=300, unit=Unit.MILLILITER
+        )
+
+    def setUp(self):
+        super().setUp()
+        self.menu = self.create_menu()
+        self.url = reverse("menu-shopping-list", args=[self.menu.id])
+
+    def rows(self, response):
+        return {row["product_name"]: row for row in response.data["items"]}
+
+    def test_empty_menu_gives_empty_list(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["items"], [])
+
+    def test_amounts_are_summed_across_recipes(self):
+        self.add_item(self.menu, recipe=self.approved, meal_type="breakfast")
+        self.add_item(self.menu, recipe=self.another, meal_type="dinner")
+
+        rows = self.rows(self.client.get(self.url))
+        self.assertEqual(rows["Молоко"]["amount"], 500)
+        self.assertEqual(rows["Яйця"]["amount"], 2)
+
+    def test_same_recipe_twice_counts_twice(self):
+        self.add_item(self.menu, recipe=self.approved, meal_type="breakfast")
+        self.add_item(
+            self.menu, recipe=self.approved, day=TUESDAY, meal_type="breakfast"
+        )
+
+        rows = self.rows(self.client.get(self.url))
+        self.assertEqual(rows["Молоко"]["amount"], 400)
+        self.assertEqual(rows["Яйця"]["amount"], 4)
+
+    def test_packages_rounded_up(self):
+        self.add_item(self.menu, recipe=self.approved)
+        rows = self.rows(self.client.get(self.url))
+        self.assertEqual(rows["Молоко"]["packages_needed"], 1)
+
+    def test_several_packages_needed(self):
+        for day, meal in (
+            (MONDAY, "breakfast"),
+            (MONDAY, "lunch"),
+            (MONDAY, "dinner"),
+            (MONDAY, "snack"),
+            (TUESDAY, "breakfast"),
+        ):
+            self.add_item(self.menu, recipe=self.another, day=day, meal_type=meal)
+
+        rows = self.rows(self.client.get(self.url))
+        self.assertEqual(rows["Молоко"]["amount"], 1500)
+        self.assertEqual(rows["Молоко"]["packages_needed"], 2)
+
+    def test_unpackaged_product_has_no_packages(self):
+        self.add_item(self.menu, recipe=self.approved)
+        rows = self.rows(self.client.get(self.url))
+        self.assertIsNone(rows["Яйця"]["packages_needed"])
+
+    def test_different_units_are_separate_rows(self):
+        odd = Recipe.objects.create(title="Дивний", status=Recipe.Status.APPROVED)
+        RecipeIngredient.objects.create(
+            recipe=odd, product=self.milk, amount=100, unit=Unit.GRAM
+        )
+        self.add_item(self.menu, recipe=self.approved, meal_type="breakfast")
+        self.add_item(self.menu, recipe=odd, meal_type="dinner")
+
+        items = self.client.get(self.url).data["items"]
+        milk_rows = [row for row in items if row["product_name"] == "Молоко"]
+        self.assertEqual(len(milk_rows), 2)
+
+        by_unit = {row["unit"]: row for row in milk_rows}
+        self.assertEqual(by_unit["ml"]["amount"], 200)
+        self.assertEqual(by_unit["g"]["amount"], 100)
+        self.assertIsNone(by_unit["g"]["packages_needed"])
+
+    def test_sorted_by_product_name(self):
+        self.add_item(self.menu, recipe=self.approved)
+        names = [row["product_name"] for row in self.client.get(self.url).data["items"]]
+        self.assertEqual(names, sorted(names))
+
+    def test_foreign_menu_returns_404(self):
+        foreign = self.create_menu(user=self.other, week_start=NEXT_MONDAY)
+        response = self.client.get(
+            reverse("menu-shopping-list", args=[foreign.id])
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_authentication_required(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class BuildShoppingListFunctionTests(MenuTestCase):
+    def test_empty_input(self):
+        self.assertEqual(build_shopping_list([]), [])
