@@ -41,13 +41,20 @@ MenuPlanner — вебплатформа для пошуку рецептів і
 
 Документація: `/api/docs/`, схема: `/api/schema/`.
 
-| Метод | Шлях | Опис |
-|---|---|---|
-| POST | `/api/auth/register/` | реєстрація |
-| POST | `/api/auth/login/` | вхід, повертає `access` і `refresh` |
-| POST | `/api/auth/refresh/` | новий `access`, старий `refresh` гаситься |
-| POST | `/api/auth/logout/` | `refresh` у чорний список |
-| GET | `/api/auth/me/` | дані користувача та його роль |
+| Метод | Шлях | Опис                                                        |
+|---|---|-------------------------------------------------------------|
+| POST | `/api/auth/register/` | реєстрація                                                  |
+| POST | `/api/auth/login/` | вхід, повертає `access` і `refresh`                         |
+| POST | `/api/auth/refresh/` | новий `access`, старий `refresh` гаситься                   |
+| POST | `/api/auth/logout/` | `refresh` у чорний список                                   |
+| GET | `/api/auth/me/` | дані користувача та його роль                               |
+| POST | `/api/menus/` | створити меню-чернетку на тиждень (`week_start` — понеділок) |
+| GET | `/api/menus/` | мої меню; `?status=saved` — історія                         |
+| GET, DELETE | `/api/menus/{id}/` | перегляд і видалення меню                                   |
+| POST | `/api/menus/{id}/items/` | додати рецепт (`recipe`, `date`, `meal_type`)               |
+| DELETE | `/api/menus/{id}/items/{item_id}/` | прибрати рецепт                                             |
+| POST | `/api/menus/{id}/save/` | зберегти меню в історію                                     |
+| GET | `/api/menus/{id}/shopping-list/` | список покупок із меню |                                     |
 
 ## Запуск проєкта
 
